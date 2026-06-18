@@ -6,8 +6,8 @@
   --bg-secondary: #ffffff;      /* Pure white for panels */
   --text-primary: #1e293b;      /* Dark slate for high contrast */
   --text-secondary: #64748b;    /* Muted slate for secondary text */
-  --accent-primary: #3b82f6;    /* Vibrant blue */
-  --accent-hover: #2563eb;
+  --accent-primary: #10b981;    /* Vibrant green (emerald) */
+  --accent-hover: #059669;      /* Darker green */
   --accent-success: #10b981;
   --accent-danger: #ef4444;
   --accent-warning: #f59e0b;
