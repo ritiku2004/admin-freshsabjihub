@@ -36,7 +36,8 @@ export const requestForToken = async (registerEndpoint) => {
         console.log('Admin FCM token obtained:', currentToken);
         // Register token with backend admin API
         const tokenVal = localStorage.getItem('admin_token');
-        await fetch(registerEndpoint || 'http://localhost:3000/api/v1/admin/token/register', {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000/api/v1';
+        await fetch(registerEndpoint || `${backendUrl}/admin/token/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

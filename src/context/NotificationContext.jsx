@@ -58,7 +58,8 @@ export const NotificationProvider = ({ children }) => {
     if (type === 'new_order' && orderId) {
       try {
         // Fetch order details from Admin API to get the correct shopId
-        const response = await fetch(`http://localhost:3000/api/v1/admin/orders/${orderId}`, {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000/api/v1';
+        const response = await fetch(`${backendUrl}/admin/orders/${orderId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
           }
