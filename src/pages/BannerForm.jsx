@@ -1,8 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { FiArrowLeft, FiImage, FiSave } from 'react-icons/fi'
+import { FiArrowLeft, FiImage, FiSave, FiAlertCircle } from 'react-icons/fi'
 import api from '../api'
 import CustomSelect from '../components/CustomSelect'
+
+const LIMITS = {
+  title: 35,
+  subtitle: 20,
+  description: 60,
+};
+
+function CharCount({ value, max }) {
+  const len = value ? value.length : 0;
+  const over = len > max;
+  return (
+    <span style={{
+      fontSize: '0.75rem',
+      fontWeight: 600,
+      color: over ? '#ef4444' : len >= max * 0.85 ? '#f59e0b' : 'var(--text-secondary)',
+      float: 'right',
+      marginTop: '4px',
+    }}>
+      {len}/{max}
+    </span>
+  );
+}
 
 export default function BannerForm() {
   const { id } = useParams();
@@ -18,6 +40,7 @@ export default function BannerForm() {
     text_color: '#94a3b8',
     location: 'home_top'
   });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -51,8 +74,29 @@ export default function BannerForm() {
     }
   };
 
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required.';
+    } else if (formData.title.length > LIMITS.title) {
+      newErrors.title = `Title must be ${LIMITS.title} characters or fewer.`;
+    }
+    if (formData.subtitle && formData.subtitle.length > LIMITS.subtitle) {
+      newErrors.subtitle = `Subtitle must be ${LIMITS.subtitle} characters or fewer.`;
+    }
+    if (formData.description && formData.description.length > LIMITS.description) {
+      newErrors.description = `Description must be ${LIMITS.description} characters or fewer.`;
+    }
+    return newErrors;
+  };
+
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    // Clear error for this field on change
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -89,6 +133,11 @@ export default function BannerForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
     try {
       if (isEdit) {
         await api.put(`/banners/${id}`, formData);
@@ -110,6 +159,10 @@ export default function BannerForm() {
     );
   }
 
+  const inputStyle = (field) => ({
+    ...(errors[field] ? { borderColor: '#ef4444', boxShadow: '0 0 0 3px rgba(239,68,68,0.12)' } : {})
+  });
+
   return (
     <div className="page-content">
       <div style={{ marginBottom: '32px' }}>
@@ -123,8 +176,12 @@ export default function BannerForm() {
       <div className="glass-panel" style={{ padding: '32px', width: '100%', boxSizing: 'border-box' }}>
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '24px', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
           
+          {/* Title */}
           <div className="input-group">
-            <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Banner Title *</label>
+            <label style={{ fontWeight: 600, marginBottom: '4px', display: 'block' }}>
+              Banner Title *
+              <CharCount value={formData.title} max={LIMITS.title} />
+            </label>
             <input 
               required 
               name="title" 
@@ -132,20 +189,41 @@ export default function BannerForm() {
               onChange={handleInputChange} 
               className="input-field" 
               placeholder="e.g. Summer Super Sale"
+              maxLength={LIMITS.title + 10}
+              style={inputStyle('title')}
             />
+            {errors.title && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>
+                <FiAlertCircle size={13} /> {errors.title}
+              </div>
+            )}
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Max {LIMITS.title} characters</p>
           </div>
 
+          {/* Subtitle */}
           <div className="input-group">
-            <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Subtitle</label>
+            <label style={{ fontWeight: 600, marginBottom: '4px', display: 'block' }}>
+              Subtitle
+              <CharCount value={formData.subtitle} max={LIMITS.subtitle} />
+            </label>
             <input 
               name="subtitle" 
               value={formData.subtitle} 
               onChange={handleInputChange} 
               className="input-field" 
               placeholder="e.g. Get up to 50% Off"
+              maxLength={LIMITS.subtitle + 10}
+              style={inputStyle('subtitle')}
             />
+            {errors.subtitle && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>
+                <FiAlertCircle size={13} /> {errors.subtitle}
+              </div>
+            )}
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Max {LIMITS.subtitle} characters</p>
           </div>
 
+          {/* Location */}
           <div className="input-group">
             <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Location *</label>
             <CustomSelect 
@@ -155,12 +233,18 @@ export default function BannerForm() {
               isRequired={true}
               options={[
                 { value: 'home_top', label: 'Home Page (Top)' },
-                { value: 'home_middle', label: 'Home Page (Middle)' },
-                { value: 'category_top', label: 'Category Page' }
+                { value: 'home_middle', label: 'Home Page (Middle/Between Categories)' },
+                { value: 'category_top', label: 'Category Page (Top)' }
               ]} 
             />
+            <p style={{ margin: '6px 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              {formData.location === 'home_top' && '🏠 Shown in carousel above category list'}
+              {formData.location === 'home_middle' && '📦 Shown between category product rows'}
+              {formData.location === 'category_top' && '🗂️ Shown at top of category browsing page'}
+            </p>
           </div>
 
+          {/* Image */}
           <div className="input-group">
             <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Banner Image</label>
             {formData.image_url ? (
@@ -213,6 +297,7 @@ export default function BannerForm() {
             )}
           </div>
 
+          {/* Background Color */}
           <div className="input-group">
             <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Background Color</label>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -234,6 +319,7 @@ export default function BannerForm() {
             </div>
           </div>
 
+          {/* Text Color */}
           <div className="input-group">
             <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Text Color</label>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -255,18 +341,31 @@ export default function BannerForm() {
             </div>
           </div>
 
+          {/* Description — full width */}
           <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-            <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Description</label>
+            <label style={{ fontWeight: 600, marginBottom: '4px', display: 'block' }}>
+              Description
+              <CharCount value={formData.description} max={LIMITS.description} />
+            </label>
             <textarea 
               name="description" 
               value={formData.description} 
               onChange={handleInputChange} 
               className="input-field" 
               rows="3"
+              maxLength={LIMITS.description + 10}
               placeholder="Provide a description or terms for this campaign..."
+              style={inputStyle('description')}
             ></textarea>
+            {errors.description && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>
+                <FiAlertCircle size={13} /> {errors.description}
+              </div>
+            )}
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Max {LIMITS.description} characters</p>
           </div>
 
+          {/* Submit Row */}
           <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '16px', borderTop: '1px solid #cbd5e1', paddingTop: '24px' }}>
             <Link to="/banners" className="btn" style={{ textDecoration: 'none', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               Cancel
