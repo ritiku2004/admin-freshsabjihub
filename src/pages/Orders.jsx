@@ -28,6 +28,7 @@ export default function Orders({ shops }) {
   const getStatusColor = (status) => {
     switch(status) {
       case 'Pending Payment': return '#f59e0b'; // Amber / Orange
+      case 'Placed': return '#f59e0b';
       case 'Processing': return 'var(--accent-warning)';
       case 'Shipped': return '#8b5cf6';
       case 'Delivered': return 'var(--accent-success)';
@@ -39,6 +40,7 @@ export default function Orders({ shops }) {
   const getStatusIcon = (status) => {
     switch(status) {
       case 'Pending Payment': return <FiClock />;
+      case 'Placed': return <FiClock />;
       case 'Processing': return <FiClock />;
       case 'Shipped': return <FiTruck />;
       case 'Delivered': return <FiCheck />;

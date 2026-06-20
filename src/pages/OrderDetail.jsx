@@ -108,6 +108,7 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
   const getStatusColor = (status) => {
     switch(status) {
       case 'Pending Payment': return '#f59e0b';
+      case 'Placed': return '#f59e0b'; // Amber for Placed (Waiting for Confirmation)
       case 'Processing': return 'var(--accent-warning)';
       case 'Shipped': return '#8b5cf6';
       case 'Delivered': return 'var(--accent-success)';
@@ -222,6 +223,7 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
                   style={{ width: '100%', padding: '12px 16px' }}
                 >
                   <option value="Pending Payment">Pending Payment</option>
+                  <option value="Placed">Placed</option>
                   <option value="Processing">Processing</option>
                   <option value="Shipped">Shipped</option>
                   <option value="Delivered">Delivered</option>
