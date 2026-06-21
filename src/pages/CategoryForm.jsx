@@ -46,8 +46,8 @@ export default function CategoryForm() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Hard block category name beyond 15 characters
-    if (name === 'name' && value.length > 15) return;
+    // Hard block category name beyond 15 characters, but allow deleting characters if it's already over 15
+    if (name === 'name' && value.length > 15 && value.length > (formData.name || '').length) return;
     setFormData({ ...formData, [name]: value });
   };
 
@@ -140,7 +140,6 @@ export default function CategoryForm() {
               onChange={handleInputChange} 
               className="input-field" 
               placeholder="e.g. Fruits & Vegetables"
-              maxLength={15}
             />
             <div style={{ 
               display: 'flex', 
