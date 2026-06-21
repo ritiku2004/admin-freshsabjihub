@@ -7,6 +7,8 @@ import CustomSelect from '../components/CustomSelect'
 export default function GlobalProducts() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -41,6 +43,14 @@ export default function GlobalProducts() {
     }
   };
 
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = !search || 
+      (product.name && product.name.toLowerCase().includes(search.toLowerCase())) ||
+      (product.brand && product.brand.toLowerCase().includes(search.toLowerCase()));
+    const matchesCategory = !selectedCategory || String(product.category_id) === String(selectedCategory);
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="page-content">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
@@ -57,12 +67,19 @@ export default function GlobalProducts() {
         <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
           <div className="input-group" style={{ flex: '1 1 250px', margin: 0, flexDirection: 'row', alignItems: 'center', background: 'var(--bg-primary)', borderRadius: '8px', padding: '0 16px', border: '1px solid #cbd5e1' }}>
             <FiSearch style={{ color: 'var(--text-secondary)' }} />
-            <input type="text" placeholder="Search products..." className="input-field" style={{ flex: 1, background: 'transparent', border: 'none', boxShadow: 'none' }} />
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input-field" 
+              style={{ flex: 1, background: 'transparent', border: 'none', boxShadow: 'none' }} 
+            />
           </div>
           <CustomSelect 
             name="filter_category" 
-            value="" 
-            onChange={() => {}} 
+            value={selectedCategory} 
+            onChange={(e) => setSelectedCategory(e.target.value)} 
             placeholder="All Categories"
             style={{ flex: '1 1 200px', minWidth: '200px' }}
             options={[{value: '', label: 'All Categories'}, ...categories.map(cat => ({ value: cat.id, label: cat.name }))]} 
@@ -81,7 +98,7 @@ export default function GlobalProducts() {
               </tr>
             </thead>
             <tbody>
-              {products.map(product => (
+              {filteredProducts.map(product => (
                 <tr key={product.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -127,10 +144,10 @@ export default function GlobalProducts() {
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && (
+              {filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                    No products found. Add some to the catalog.
+                    No products found matching the criteria.
                   </td>
                 </tr>
               )}
