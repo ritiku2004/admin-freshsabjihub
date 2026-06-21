@@ -11,7 +11,8 @@ export default function CategoryForm() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    image_url: ''
+    image_url: '',
+    sequence: 0
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -30,7 +31,8 @@ export default function CategoryForm() {
         setFormData({
           name: data.data.name || '',
           description: data.data.description || '',
-          image_url: data.data.image_url || ''
+          image_url: data.data.image_url || '',
+          sequence: data.data.sequence !== undefined ? data.data.sequence : 0
         });
       }
     } catch (err) {
@@ -43,7 +45,10 @@ export default function CategoryForm() {
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    // Hard block category name beyond 15 characters
+    if (name === 'name' && value.length > 15) return;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleImageUpload = async (e) => {
@@ -80,11 +85,24 @@ export default function CategoryForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validate category name length
+    if (!formData.name.trim()) {
+      alert('Category name is required.');
+      return;
+    }
+    if (formData.name.trim().length > 15) {
+      alert('Category name must be 15 characters or less to fit on the app.');
+      return;
+    }
+    const payload = {
+      ...formData,
+      sequence: parseInt(formData.sequence, 10) || 0
+    };
     try {
       if (isEdit) {
-        await api.put(`/categories/${id}`, formData);
+        await api.put(`/categories/${id}`, payload);
       } else {
-        await api.post('/categories', formData);
+        await api.post('/categories', payload);
       }
       navigate('/categories');
     } catch (err) {
@@ -122,7 +140,30 @@ export default function CategoryForm() {
               onChange={handleInputChange} 
               className="input-field" 
               placeholder="e.g. Fruits & Vegetables"
+              maxLength={15}
             />
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginTop: '6px' 
+            }}>
+              <span style={{ 
+                fontSize: '0.78rem', 
+                color: formData.name.length >= 15 ? '#ef4444' : formData.name.length >= 12 ? '#f97316' : 'var(--text-secondary)'
+              }}>
+                {formData.name.length >= 15 
+                  ? '⚠️ Maximum length reached — names must fit in the app card'
+                  : 'Category name must be 15 characters or less'}
+              </span>
+              <span style={{ 
+                fontSize: '0.82rem', 
+                fontWeight: 700,
+                color: formData.name.length >= 15 ? '#ef4444' : formData.name.length >= 12 ? '#f97316' : 'var(--text-secondary)'
+              }}>
+                {formData.name.length}/15
+              </span>
+            </div>
           </div>
 
           <div className="input-group">
@@ -175,6 +216,24 @@ export default function CategoryForm() {
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="input-group">
+            <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Sequence Order</label>
+            <input 
+              type="number"
+              name="sequence" 
+              value={formData.sequence} 
+              onChange={handleInputChange} 
+              className="input-field" 
+              placeholder="e.g. 1"
+              min="0"
+            />
+            <div style={{ marginTop: '6px' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                Determines the display order in the app (lower numbers appear first).
+              </span>
+            </div>
           </div>
 
           <div className="input-group" style={{ gridColumn: '1 / -1' }}>

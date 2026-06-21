@@ -50,6 +50,7 @@ export default function Categories() {
               <tr>
                 <th>Category Name</th>
                 <th>Description</th>
+                <th>Sequence</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
@@ -69,6 +70,21 @@ export default function Categories() {
                     </div>
                   </td>
                   <td style={{ color: 'var(--text-secondary)' }}>{cat.description || '-'}</td>
+                  <td>
+                    <span style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      background: 'rgba(59, 130, 246, 0.1)', 
+                      color: 'var(--accent-primary)', 
+                      padding: '4px 10px', 
+                      borderRadius: '6px', 
+                      fontWeight: 600,
+                      fontSize: '0.85rem'
+                    }}>
+                      {cat.sequence ?? 0}
+                    </span>
+                  </td>
                   <td style={{ textAlign: 'right' }}>
                     <Link to={`/categories/${cat.id}/edit`} className="icon-btn" style={{ color: 'var(--accent-primary)', marginRight: '12px', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center' }}>
                       <FiEdit2 />
@@ -81,7 +97,7 @@ export default function Categories() {
               ))}
               {categories.length === 0 && (
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
                     No categories found.
                   </td>
                 </tr>
