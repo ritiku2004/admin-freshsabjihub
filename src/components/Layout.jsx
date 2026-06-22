@@ -3,11 +3,82 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useNotification } from '../context/NotificationContext'
+import { FiCopy } from 'react-icons/fi'
+import api from '../api'
 
 export default function Layout({ shops }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { alertMessage, setAlertMessage, newOrderInfo, setNewOrderInfo } = useNotification();
+  const { alertMessage, setAlertMessage, newOrderInfo, setNewOrderInfo, acceptCurrentNewOrder } = useNotification();
   const navigate = useNavigate();
+  const [copyingOrderId, setCopyingOrderId] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const match = window.location.pathname.match(/\/shop\/(\d+)/);
+  const currentShopId = match ? parseInt(match[1]) : null;
+  const isCorrectShop = currentShopId && newOrderInfo && parseInt(currentShopId) === parseInt(newOrderInfo.shopId);
+
+  const handleCopyOrder = async () => {
+    if (!newOrderInfo) return;
+    try {
+      setCopyingOrderId(newOrderInfo.orderId);
+      const { data } = await api.get(`/orders/${newOrderInfo.orderId}`);
+      if (data.success) {
+        const order = data.data;
+        const receiverName = order.receiver_name || `${order.first_name} ${order.last_name}`;
+        const receiverMobile = order.receiver_mobile || order.user_phone || 'N/A';
+        
+        const addressParts = [
+          order.address_line1,
+          order.address_line2,
+          order.city,
+          order.state,
+          order.zipcode
+        ].filter(Boolean);
+        const addressStr = addressParts.length > 0 ? addressParts.join(', ') : 'N/A';
+
+        let mapUrl = 'N/A';
+        if (order.latitude && order.longitude) {
+          mapUrl = `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`;
+        } else if (addressStr !== 'N/A') {
+          mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressStr)}`;
+        }
+
+        const itemsList = order.items && order.items.length > 0
+          ? order.items.map(item => `- ${item.product_name || item.name} (Price: ₹${parseFloat(item.price).toFixed(2)}, Qty: ${item.quantity})`).join('\n')
+          : 'No items';
+
+        let paymentStatusStr = 'Pending';
+        if (order.payment_method === 'COD') {
+          paymentStatusStr = 'Cash on Delivery';
+        } else if (order.payment_status === 'Paid') {
+          paymentStatusStr = 'Payment Done';
+        } else if (order.payment_status === 'Failed') {
+          paymentStatusStr = 'Payment Failed';
+        } else {
+          paymentStatusStr = order.payment_status || 'Pending';
+        }
+
+        const copiedText = `Receiver Name: ${receiverName}
+Mobile Number: ${receiverMobile}
+Location: ${addressStr}
+Google Map URL: ${mapUrl}
+Payment Status: ${paymentStatusStr}
+
+Order Detail:
+${itemsList}
+
+Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
+
+        await navigator.clipboard.writeText(copiedText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy order details', err);
+    } finally {
+      setCopyingOrderId(null);
+    }
+  };
 
   const handleViewOrder = () => {
     if (newOrderInfo) {
@@ -22,7 +93,7 @@ export default function Layout({ shops }) {
   return (
     <div className="app-container">
       {/* Dynamic Push Notification Banner */}
-      {alertMessage && (
+      {alertMessage && isCorrectShop && (
         <div style={{
           position: 'fixed',
           top: '20px',
@@ -59,7 +130,7 @@ export default function Layout({ shops }) {
       )}
 
       {/* New Order Alert Modal Popup */}
-      {newOrderInfo && (
+      {newOrderInfo && isCorrectShop && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -126,40 +197,80 @@ export default function Layout({ shops }) {
               </strong>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
               <button 
-                onClick={() => setNewOrderInfo(null)}
+                onClick={acceptCurrentNewOrder}
                 style={{
-                  flex: 1,
                   padding: '12px',
                   borderRadius: '10px',
-                  backgroundColor: '#f1f5f9',
-                  color: 'var(--text-primary)',
+                  backgroundColor: '#10B981',
+                  color: 'white',
                   fontWeight: 600,
-                  border: '1px solid #e2e8f0',
+                  border: 'none',
                   cursor: 'pointer',
-                  transition: 'background-color 0.2s'
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                  transition: 'background-color 0.2s',
+                  fontSize: '15px'
                 }}
               >
-                Dismiss
+                Accept Order (Set to Processing)
               </button>
               <button 
-                onClick={handleViewOrder}
+                onClick={handleCopyOrder}
+                disabled={copyingOrderId !== null}
                 style={{
-                  flex: 1,
                   padding: '12px',
                   borderRadius: '10px',
-                  backgroundColor: 'var(--accent-primary)',
+                  backgroundColor: '#3b82f6',
                   color: 'white',
                   fontWeight: 600,
                   border: 'none',
                   cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                  transition: 'background-color 0.2s'
+                  transition: 'background-color 0.2s',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}
               >
-                View Details
+                <FiCopy /> {copyingOrderId ? 'Copying...' : (copied ? 'Copied!' : 'Copy Order Details Info')}
               </button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => setNewOrderInfo(null)}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    borderRadius: '10px',
+                    backgroundColor: '#f1f5f9',
+                    color: 'var(--text-primary)',
+                    fontWeight: 600,
+                    border: '1px solid #e2e8f0',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  Dismiss
+                </button>
+                <button 
+                  onClick={handleViewOrder}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--accent-primary)',
+                    color: 'white',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  View Details
+                </button>
+              </div>
             </div>
           </div>
         </div>

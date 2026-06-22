@@ -10,6 +10,7 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updatingPayment, setUpdatingPayment] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
@@ -52,6 +53,26 @@ export default function OrderDetail() {
     }
   };
 
+  const handleMarkPaymentDone = async () => {
+    if (!order) return;
+    setUpdatingPayment(true);
+    try {
+      const { data } = await api.put(`/orders/${order.id}`, {
+        status: order.status,
+        payment_status: 'Paid'
+      });
+      if (data.success) {
+        showToast('Payment marked as Paid successfully');
+        setOrder(prev => ({ ...prev, payment_status: 'Paid' }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || 'Failed to update payment status');
+    } finally {
+      setUpdatingPayment(false);
+    }
+  };
+
   const handleCopyOrderInfo = () => {
     if (!order) return;
 
@@ -78,10 +99,22 @@ export default function OrderDetail() {
       ? order.items.map(item => `- ${item.product_name || item.name} (Price: ₹${parseFloat(item.price).toFixed(2)}, Qty: ${item.quantity})`).join('\n')
       : 'No items';
 
+    let paymentStatusStr = 'Pending';
+    if (order.payment_method === 'COD') {
+      paymentStatusStr = 'Cash on Delivery';
+    } else if (order.payment_status === 'Paid') {
+      paymentStatusStr = 'Payment Done';
+    } else if (order.payment_status === 'Failed') {
+      paymentStatusStr = 'Payment Failed';
+    } else {
+      paymentStatusStr = order.payment_status || 'Pending';
+    }
+
     const copiedText = `Receiver Name: ${receiverName}
 Mobile Number: ${receiverMobile}
 Location: ${addressStr}
 Google Map URL: ${mapUrl}
+Payment Status: ${paymentStatusStr}
 
 Order Detail:
 ${itemsList}
@@ -249,15 +282,34 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.95rem' }}>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Payment Status</span>
-                <span style={{ 
-                  fontWeight: 600, 
-                  color: order.payment_status === 'Paid' ? 'var(--accent-success)' : order.payment_status === 'Failed' ? 'var(--accent-danger)' : '#f59e0b',
-                  fontSize: '1rem' 
-                }}>
-                  {order.payment_status || 'Pending'}
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Payment Status</span>
+                  <span style={{ 
+                    fontWeight: 600, 
+                    color: order.payment_status === 'Paid' ? 'var(--accent-success)' : order.payment_status === 'Failed' ? 'var(--accent-danger)' : '#f59e0b',
+                    fontSize: '1rem' 
+                  }}>
+                    {order.payment_status || 'Pending'}
+                  </span>
+                </div>
+                {order.payment_status !== 'Paid' && (
+                  <button
+                    onClick={handleMarkPaymentDone}
+                    disabled={updatingPayment}
+                    className="btn btn-primary"
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '0.85rem',
+                      backgroundColor: 'var(--accent-success)',
+                      borderColor: 'var(--accent-success)',
+                      color: 'white',
+                      boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)'
+                    }}
+                  >
+                    {updatingPayment ? 'Updating...' : 'Mark Paid'}
+                  </button>
+                )}
               </div>
               <div>
                 <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Razorpay Order ID</span>
@@ -337,9 +389,9 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
           {/* Copy Action Card */}
           <div style={{ marginTop: '8px' }}>
             <button 
-              className="btn btn-secondary" 
+              className="btn btn-primary" 
               onClick={handleCopyOrderInfo}
-              style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '14px', borderRadius: '12px' }}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '14px', borderRadius: '12px', backgroundColor: '#3b82f6', borderColor: '#3b82f6', color: '#ffffff' }}
             >
               <FiCopy /> Copy Order Details Info
             </button>

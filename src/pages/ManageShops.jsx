@@ -53,7 +53,6 @@ export default function ManageShops({ shops, refreshShops }) {
     name: '',
     address: '',
     city: '',
-    zipcode: '',
     latitude: '',
     longitude: '',
     is_active: true
@@ -65,7 +64,7 @@ export default function ManageShops({ shops, refreshShops }) {
 
   const handleOpenAddModal = () => {
     setEditingShopId(null);
-    setFormData({ name: '', address: '', city: '', zipcode: '', latitude: '', longitude: '', is_active: true });
+    setFormData({ name: '', address: '', city: '', latitude: '', longitude: '', is_active: true });
     setShowAddModal(true);
   };
 
@@ -75,7 +74,6 @@ export default function ManageShops({ shops, refreshShops }) {
       name: shop.name,
       address: shop.address,
       city: shop.city,
-      zipcode: shop.zipcode,
       latitude: shop.latitude ? String(shop.latitude) : '',
       longitude: shop.longitude ? String(shop.longitude) : '',
       is_active: shop.is_active
@@ -105,7 +103,6 @@ export default function ManageShops({ shops, refreshShops }) {
         name: formData.name,
         address: formData.address,
         city: formData.city,
-        zipcode: formData.zipcode,
         latitude: formData.latitude ? parseFloat(formData.latitude) : 0,
         longitude: formData.longitude ? parseFloat(formData.longitude) : 0,
         is_active: formData.is_active
@@ -168,7 +165,7 @@ export default function ManageShops({ shops, refreshShops }) {
                   </td>
                   <td>
                     <p>{shop.address}</p>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{shop.city}, {shop.zipcode}</p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{shop.city}</p>
                   </td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     {shop.latitude}, {shop.longitude}
@@ -247,31 +244,17 @@ export default function ManageShops({ shops, refreshShops }) {
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="form-label">City</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    required 
-                    value={formData.city}
-                    onChange={(e) => setFormData({...formData, city: e.target.value})}
-                    placeholder="e.g. New York"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label className="form-label">Zipcode</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    required 
-                    value={formData.zipcode}
-                    onChange={(e) => setFormData({...formData, zipcode: e.target.value})}
-                    placeholder="e.g. 10001"
-                    style={{ width: '100%' }}
-                  />
-                </div>
+              <div>
+                <label className="form-label">City</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  required 
+                  value={formData.city}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  placeholder="e.g. New York"
+                  style={{ width: '100%' }}
+                />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

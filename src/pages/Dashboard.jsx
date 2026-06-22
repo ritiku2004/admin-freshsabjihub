@@ -87,7 +87,17 @@ export default function Dashboard() {
         gap: '24px'
       }}>
         {displayStats.map((stat, i) => (
-          <div key={i} className="glass-panel" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div 
+            key={i} 
+            className="glass-panel" 
+            style={{ 
+              padding: '24px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '20px',
+              gridColumn: stat.title === 'Total Revenue' ? 'span 2' : 'auto'
+            }}
+          >
             <div style={{
               width: '56px', height: '56px',
               borderRadius: '16px',

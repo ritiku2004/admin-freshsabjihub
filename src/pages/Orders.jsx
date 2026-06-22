@@ -1,12 +1,76 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiEye, FiClock, FiCheck, FiTruck, FiX } from 'react-icons/fi'
+import { FiEye, FiClock, FiCheck, FiTruck, FiX, FiCopy } from 'react-icons/fi'
 import api from '../api'
 
 export default function Orders({ shops }) {
   const { shopId } = useParams();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [copyingOrderId, setCopyingOrderId] = useState(null);
+  const [copiedOrderId, setCopiedOrderId] = useState(null);
+
+  const handleCopyOrder = async (orderSummary) => {
+    try {
+      setCopyingOrderId(orderSummary.id);
+      const { data } = await api.get(`/orders/${orderSummary.id}`);
+      if (data.success) {
+        const order = data.data;
+        const receiverName = order.receiver_name || `${order.first_name} ${order.last_name}`;
+        const receiverMobile = order.receiver_mobile || order.user_phone || 'N/A';
+        
+        const addressParts = [
+          order.address_line1,
+          order.address_line2,
+          order.city,
+          order.state,
+          order.zipcode
+        ].filter(Boolean);
+        const addressStr = addressParts.length > 0 ? addressParts.join(', ') : 'N/A';
+
+        let mapUrl = 'N/A';
+        if (order.latitude && order.longitude) {
+          mapUrl = `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`;
+        } else if (addressStr !== 'N/A') {
+          mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressStr)}`;
+        }
+
+        const itemsList = order.items && order.items.length > 0
+          ? order.items.map(item => `- ${item.product_name || item.name} (Price: ₹${parseFloat(item.price).toFixed(2)}, Qty: ${item.quantity})`).join('\n')
+          : 'No items';
+
+        let paymentStatusStr = 'Pending';
+        if (order.payment_method === 'COD') {
+          paymentStatusStr = 'Cash on Delivery';
+        } else if (order.payment_status === 'Paid') {
+          paymentStatusStr = 'Payment Done';
+        } else if (order.payment_status === 'Failed') {
+          paymentStatusStr = 'Payment Failed';
+        } else {
+          paymentStatusStr = order.payment_status || 'Pending';
+        }
+
+        const copiedText = `Receiver Name: ${receiverName}
+Mobile Number: ${receiverMobile}
+Location: ${addressStr}
+Google Map URL: ${mapUrl}
+Payment Status: ${paymentStatusStr}
+
+Order Detail:
+${itemsList}
+
+Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
+
+        await navigator.clipboard.writeText(copiedText);
+        setCopiedOrderId(orderSummary.id);
+        setTimeout(() => setCopiedOrderId(null), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy order details', err);
+    } finally {
+      setCopyingOrderId(null);
+    }
+  };
   
   const activeShop = shops.find(s => s.id === parseInt(shopId));
 
@@ -76,7 +140,9 @@ export default function Orders({ shops }) {
                 <tr key={order.id}>
                   <td style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>{order.order_number}</td>
                   <td>{order.first_name} {order.last_name}</td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{new Date(order.created_at).toLocaleDateString()}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>
+                    {new Date(order.created_at).toLocaleDateString()} {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </td>
                   <td style={{ fontWeight: 600 }}>₹{parseFloat(order.total_amount).toFixed(2)}</td>
                   <td>
                     <span style={{
@@ -94,13 +160,21 @@ export default function Orders({ shops }) {
                       {order.status}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                    <button 
+                      className="btn" 
+                      onClick={() => handleCopyOrder(order)}
+                      disabled={copyingOrderId === order.id}
+                      style={{ padding: '6px 12px', border: '1px solid #cbd5e1', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <FiCopy /> {copyingOrderId === order.id ? 'Copying...' : (copiedOrderId === order.id ? 'Copied!' : 'Copy')}
+                    </button>
                     <button 
                       className="btn" 
                       onClick={() => navigate(`/shop/${shopId}/orders/${order.id}`)}
-                      style={{ padding: '6px 12px', border: '1px solid #cbd5e1', color: 'var(--text-primary)' }}
+                      style={{ padding: '6px 12px', border: '1px solid #cbd5e1', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                     >
-                      <FiEye style={{ marginRight: '6px' }} /> View
+                      <FiEye /> View
                     </button>
                   </td>
                 </tr>
