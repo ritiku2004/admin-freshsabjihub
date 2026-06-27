@@ -171,19 +171,25 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
 
   const handlePrintInvoice = async () => {
     try {
-      showToast('Preparing invoice for printing...');
-      const response = await api.get(`/orders/${order.id}/invoice`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      showToast('Downloading invoice...');
+      const token = localStorage.getItem('admin_token') || '';
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${baseUrl}/admin/orders/${order.id}/invoice`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      iframe.onload = () => {
-        setTimeout(() => {
-          iframe.contentWindow.print();
-        }, 100);
-      };
+      if (!response.ok) throw new Error('Failed to fetch invoice');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Invoice-${order.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('Error printing invoice:', error);
       showToast('Failed to print invoice');
@@ -247,7 +253,7 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
           className="btn btn-primary"
           style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: '#0f172a' }}
         >
-          <FiPrinter /> Print Invoice
+          <FiPrinter /> Download Invoice
         </button>
       </div>
 
