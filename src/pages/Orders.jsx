@@ -9,6 +9,7 @@ export default function Orders({ shops }) {
   const [orders, setOrders] = useState([]);
   const [copyingOrderId, setCopyingOrderId] = useState(null);
   const [copiedOrderId, setCopiedOrderId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const handleCopyOrder = async (orderSummary) => {
     try {
@@ -113,6 +114,10 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
     }
   }
 
+  const filteredOrders = statusFilter === 'All'
+    ? orders
+    : orders.filter(order => order.status === statusFilter);
+
   return (
     <div className="page-content">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
@@ -120,9 +125,40 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
           <h1 style={{ fontSize: '2rem', fontWeight: 600, marginBottom: '8px' }}>Orders</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Manage recent orders for <strong>{activeShop ? activeShop.name : '...'}</strong></p>
         </div>
+        <div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '8px',
+              border: '1px solid var(--glass-border)',
+              backgroundColor: '#ffffff',
+              color: 'var(--text-primary)',
+              fontWeight: 500,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              outline: 'none',
+              minWidth: '200px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            {['All', 'Pending Payment', 'Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(status => {
+              const count = status === 'All' 
+                ? orders.length 
+                : orders.filter(o => o.status === status).length;
+              return (
+                <option key={status} value={status}>
+                  {status} ({count})
+                </option>
+              )
+            })}
+          </select>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '24px' }}>
+
         <div className="table-container">
           <table>
             <thead>
@@ -136,7 +172,7 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
               </tr>
             </thead>
             <tbody>
-              {orders.map(order => (
+              {filteredOrders.map(order => (
                 <tr key={order.id}>
                   <td style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>{order.order_number}</td>
                   <td>{order.first_name} {order.last_name}</td>
@@ -179,10 +215,12 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                    No orders found for this shop.
+                    {statusFilter === 'All' 
+                      ? 'No orders found for this shop.' 
+                      : `No ${statusFilter} orders found for this shop.`}
                   </td>
                 </tr>
               )}
