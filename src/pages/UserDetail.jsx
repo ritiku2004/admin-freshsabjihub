@@ -60,7 +60,7 @@ export default function UserDetail() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
+      <div className="detail-grid">
         
         {/* Left Column: Profile and Addresses */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

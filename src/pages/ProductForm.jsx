@@ -18,6 +18,7 @@ export default function ProductForm() {
     discount_percentage: '0.00',
     quantity: '',
     quantity_type: 'piece',
+    product_type: 'general',
     sku: '',
     image_url: '',
     is_active: true
@@ -59,6 +60,7 @@ export default function ProductForm() {
           discount_percentage: data.data.discount_percentage !== undefined ? String(data.data.discount_percentage) : '0.00',
           quantity: data.data.quantity || '',
           quantity_type: data.data.quantity_type || 'piece',
+          product_type: data.data.type || 'general',
           sku: data.data.sku || '',
           image_url: data.data.image_url || '',
           is_active: data.data.is_active !== undefined ? data.data.is_active : true
@@ -129,6 +131,7 @@ export default function ProductForm() {
     try {
       const payload = {
         ...formData,
+        type: formData.product_type,
         category_id: parseInt(formData.category_id),
         mrp_price: parseFloat(formData.mrp_price),
         discount_percentage: parseFloat(formData.discount_percentage || 0),
@@ -283,6 +286,20 @@ export default function ProductForm() {
               onChange={handleInputChange} 
               isRequired={true}
               options={['kg', 'g', 'mg', 'l', 'ml', 'piece', 'pack', 'dozen'].map(t => ({ value: t, label: t }))} 
+            />
+          </div>
+
+          <div className="input-group">
+            <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Product Type</label>
+            <CustomSelect
+              name="product_type"
+              value={formData.product_type}
+              onChange={handleInputChange}
+              options={[
+                { value: 'general', label: '🛒 General' },
+                { value: 'trending', label: '🔥 Trending' },
+                { value: 'best_deal', label: '🏷️ Best Deal' },
+              ]}
             />
           </div>
 

@@ -8,7 +8,10 @@ export default function ManageCharges() {
     delivery_distance_rate: 5,
     free_delivery_threshold: 300,
     handling_fee: 15,
-    free_handling_threshold: 500
+    free_handling_threshold: 500,
+    global_discount_percentage: 0,
+    global_discount_threshold: 0,
+    max_delivery_radius_km: 15
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -28,7 +31,10 @@ export default function ManageCharges() {
           delivery_distance_rate: Number(data.data.delivery_distance_rate),
           free_delivery_threshold: Number(data.data.free_delivery_threshold),
           handling_fee: Number(data.data.handling_fee),
-          free_handling_threshold: Number(data.data.free_handling_threshold)
+          free_handling_threshold: Number(data.data.free_handling_threshold),
+          global_discount_percentage: Number(data.data.global_discount_percentage),
+          global_discount_threshold: Number(data.data.global_discount_threshold),
+          max_delivery_radius_km: Number(data.data.max_delivery_radius_km) || 15
         });
       }
     } catch (err) {
@@ -59,7 +65,10 @@ export default function ManageCharges() {
         delivery_distance_rate: Number(formData.delivery_distance_rate),
         free_delivery_threshold: Number(formData.free_delivery_threshold),
         handling_fee: Number(formData.handling_fee),
-        free_handling_threshold: Number(formData.free_handling_threshold)
+        free_handling_threshold: Number(formData.free_handling_threshold),
+        global_discount_percentage: Number(formData.global_discount_percentage),
+        global_discount_threshold: Number(formData.global_discount_threshold),
+        max_delivery_radius_km: Number(formData.max_delivery_radius_km)
       });
       if (data.success) {
         showBanner('success', 'Charges configuration saved successfully!');
@@ -205,6 +214,61 @@ export default function ManageCharges() {
                   style={{ width: '100%', padding: '10px 12px' }}
                 />
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>Subtotal amount above which handling fees are waived.</span>
+              </div>
+
+              <div className="input-group">
+                <label style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Max Delivery Radius (KM)</label>
+                <input 
+                  type="number" 
+                  step="0.1"
+                  required 
+                  name="max_delivery_radius_km" 
+                  value={formData.max_delivery_radius_km} 
+                  onChange={handleInputChange} 
+                  className="input-field" 
+                  style={{ width: '100%', padding: '10px 12px' }}
+                />
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>Maximum distance allowed for delivery (Default: 15km).</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Global Discounts */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
+              <FiSliders size={22} color="var(--accent-primary)" />
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Global Discounts</h3>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
+              <div className="input-group">
+                <label style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Global Discount (%)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  required 
+                  name="global_discount_percentage" 
+                  value={formData.global_discount_percentage} 
+                  onChange={handleInputChange} 
+                  className="input-field" 
+                  style={{ width: '100%', padding: '10px 12px' }}
+                />
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>Percentage discount applied to subtotal (e.g., 10 for 10%). 0 to disable.</span>
+              </div>
+
+              <div className="input-group">
+                <label style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Discount Threshold (₹)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  required 
+                  name="global_discount_threshold" 
+                  value={formData.global_discount_threshold} 
+                  onChange={handleInputChange} 
+                  className="input-field" 
+                  style={{ width: '100%', padding: '10px 12px' }}
+                />
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>Subtotal amount required to activate the global discount.</span>
               </div>
             </div>
           </div>

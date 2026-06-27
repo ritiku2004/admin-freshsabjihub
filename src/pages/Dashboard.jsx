@@ -60,7 +60,7 @@ export default function Dashboard() {
         
         {/* Timeframe Toggles */}
         <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
-          {['week', '15days', 'month', 'overall'].map((tf) => (
+          {['today', 'week', '15days', 'month', 'overall'].map((tf) => (
             <button 
               key={tf}
               onClick={() => setTimeframe(tf)}
@@ -75,7 +75,7 @@ export default function Dashboard() {
                 transition: 'all 0.2s ease'
               }}
             >
-              {tf === 'week' ? '7 Days' : tf === '15days' ? '15 Days' : tf === 'month' ? '1 Month' : 'Overall'}
+              {tf === 'today' ? 'Today' : tf === 'week' ? '7 Days' : tf === '15days' ? '15 Days' : tf === 'month' ? '1 Month' : 'Overall'}
             </button>
           ))}
         </div>
@@ -95,7 +95,7 @@ export default function Dashboard() {
               display: 'flex', 
               alignItems: 'center', 
               gap: '20px',
-              gridColumn: stat.title === 'Total Revenue' ? 'span 2' : 'auto'
+              gridColumn: stat.title === 'Total Revenue' ? '1 / -1' : 'auto'
             }}
           >
             <div style={{

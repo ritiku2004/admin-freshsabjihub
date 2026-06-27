@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiUser, FiMapPin, FiPackage, FiClock, FiCopy, FiExternalLink, FiShield } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiMapPin, FiPackage, FiClock, FiCopy, FiExternalLink, FiShield, FiPrinter } from 'react-icons/fi';
 import api from '../api';
 
 export default function OrderDetail() {
@@ -169,6 +169,27 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
 
   const itemsSubtotal = order.items ? order.items.reduce((acc, item) => acc + (item.quantity * parseFloat(item.price)), 0) : 0;
 
+  const handlePrintInvoice = async () => {
+    try {
+      showToast('Preparing invoice for printing...');
+      const response = await api.get(`/orders/${order.id}/invoice`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.print();
+        }, 100);
+      };
+    } catch (error) {
+      console.error('Error printing invoice:', error);
+      showToast('Failed to print invoice');
+    }
+  };
+
   return (
     <div className="page-content">
       {/* Toast Notification */}
@@ -220,9 +241,17 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
             Manage and view information for Order <strong style={{ color: 'var(--accent-primary)' }}>#{order.order_number}</strong>
           </p>
         </div>
+        
+        <button 
+          onClick={handlePrintInvoice}
+          className="btn btn-primary"
+          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: '#0f172a' }}
+        >
+          <FiPrinter /> Print Invoice
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '24px' }}>
+      <div className="detail-grid">
         
         {/* Left Column: Status Update & Receiver Card */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -443,6 +472,12 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
                 <span style={{ color: 'var(--text-secondary)' }}>Items Subtotal</span>
                 <span style={{ fontWeight: 500 }}>₹{parseFloat(itemsSubtotal).toFixed(2)}</span>
               </div>
+              {parseFloat(order.global_discount_amount) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--accent-success)' }}>
+                  <span style={{ fontWeight: 600 }}>Global Discount</span>
+                  <span style={{ fontWeight: 600 }}>- ₹{parseFloat(order.global_discount_amount).toFixed(2)}</span>
+                </div>
+              )}
               {parseFloat(order.delivery_fee) > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Delivery Fee</span>
