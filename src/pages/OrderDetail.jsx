@@ -171,7 +171,7 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
 
   const handlePrintInvoice = async () => {
     try {
-      showToast('Downloading invoice...');
+      showToast('Preparing invoice...');
       const token = localStorage.getItem('admin_token') || '';
       const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/v1';
       const response = await fetch(`${baseUrl}/admin/orders/${order.id}/invoice`, {
@@ -182,17 +182,27 @@ Total Amount: ₹${parseFloat(order.total_amount).toFixed(2)}`;
       
       if (!response.ok) throw new Error('Failed to fetch invoice');
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Invoice-${order.id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const data = await response.json();
+      if (!data.success || !data.html) throw new Error('Invalid invoice data received');
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(data.html);
+      iframe.contentDocument.close();
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          // Optional: remove iframe after printing
+          // setTimeout(() => document.body.removeChild(iframe), 1000);
+        }, 500); // Wait for fonts and images to load
+      };
     } catch (error) {
-      console.error('Error printing invoice:', error);
-      showToast('Failed to print invoice');
+      console.error('Error generating invoice:', error);
+      showToast('Failed to generate invoice');
     }
   };
 
